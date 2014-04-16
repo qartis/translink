@@ -19,8 +19,8 @@
 #define max(a,b) ((a>b)?a:b)
 #define min(a,b) ((a<b)?a:b)
 
-
-unsigned int readn(char *str, int n){
+unsigned int readn(char *str, int n)
+{
     unsigned int num = 0;
     int i;
     for(i=0;i<n;i++){
@@ -65,7 +65,8 @@ static const uint16_t crc_lut[256] = {
     0x7BC7, 0x6A4E, 0x58D5, 0x495C, 0x3DE3, 0x2C6A, 0x1EF1, 0x0F78
 };
 
-uint16_t fcs16(uint16_t crc, uint8_t *data, unsigned int len) {
+uint16_t fcs16(uint16_t crc, uint8_t *data, unsigned int len)
+{
     uint16_t next;
     data+=4;
     while(len--){
@@ -122,7 +123,9 @@ void superimpose(char *bits, unsigned int val, int offset, int len)
 }
 
 char *encode(struct tm tm, int z_visited, int n_zones){
-    static char bits[] = "00000001011100100001000001011101000110010100000110000000000100000000000000111100101000110010110000000000000011001011000100010000";
+    static char bits[] = "000000010111001000010000010111010001100101000001"
+                         "100000000001000000000000001111001010001100101100"
+                         "00000000000011001011000100010000";
     struct tm epoch = {0};
     time_t now_time;
     time_t epoch_time;
@@ -181,8 +184,8 @@ char *printb(int value, int len)
     return buf;
 }
 
-
-int reformat(char *bits, uint8_t *bytes){
+int reformat(char *bits, uint8_t *bytes)
+{
     int len;
     uint8_t byte;
     int count = 0;
@@ -212,7 +215,8 @@ int reformat(char *bits, uint8_t *bytes){
     return header_len + count + 2;
 }
 
-int unformat(uint8_t *bytes, int len, char *bits){
+int unformat(uint8_t *bytes, int len, char *bits)
+{
     int i = 0;
     int j;
     printf("bytes:\n");
@@ -249,10 +253,20 @@ void calcdayoffset(struct tm *tm, int offset)
 }
 
 const char *machinename(int machine_id, int assume_canada_line){
+    unsigned i;
     static char buf[128];
-    const char *expo[] = {"Waterfront", "Burrard", "Granville", "Stadium", "Main St", "Broadway", "Nanaimo", "29th Ave", "Joyce", "Patterson", "Metrotown", "Royal Oak", "Edmonds", "22nd St", "New West", "Columbia", "Scott Road", "Gateway", "Surrey Central", "King George"};
-    const char *mill[] = {"VCC/Clark", "Commercial", "Renfrew", "Rupert", "Gilmore", "Brentwood", "Holdom", "Sperling", "Lake City Way", "Production Way", "Lougheed", "Braid", "Sapperton"};
-    const char *canada[] = {"Waterfront", "Vancouver City Centre", "Yaletown", "Olympic Village", "Broadway", "King Edward", "Oakridge", "Langara", "Marine Drive", "Bridgeport", "Templeton", "Sea Island Centre", "YVR-Airport", "Aberdeen", "Landsdowne", "Richmond-Brighouse"};
+    const char *expo[] = {"Waterfront", "Burrard", "Granville", "Stadium",
+        "Main St", "Broadway", "Nanaimo", "29th Ave", "Joyce", "Patterson",
+        "Metrotown", "Royal Oak", "Edmonds", "22nd St", "New West", "Columbia",
+        "Scott Road", "Gateway", "Surrey Central", "King George"};
+    const char *mill[] = {"VCC/Clark", "Commercial", "Renfrew", "Rupert",
+        "Gilmore", "Brentwood", "Holdom", "Sperling", "Lake City Way",
+        "Production Way", "Lougheed", "Braid", "Sapperton"};
+    const char *canada[] = {"Waterfront", "Vancouver City Centre", "Yaletown",
+        "Olympic Village", "Broadway", "King Edward", "Oakridge", "Langara",
+        "Marine Drive", "Bridgeport", "Templeton", "Sea Island Centre",
+        "YVR-Airport", "Aberdeen", "Landsdowne", "Richmond-Brighouse"};
+
     struct {
         int sign;
         const char *msg;
@@ -279,13 +293,12 @@ const char *machinename(int machine_id, int assume_canada_line){
         }
     }
 
-    unsigned i;
     for(i=0;i<sizeof(routes)/sizeof(routes[0]);i++){
         if (machine_id == routes[i].sign){
             return routes[i].msg;
         }
     }
-    
+
     if (!assume_canada_line && (50 <= machine_id) && (machine_id <= 65)){
         sprintf(buf, "%s canada line stn", canada[machine_id - 50]);
         return buf;
@@ -298,16 +311,17 @@ int decode(char *str){
     struct tm time = {0};
     char buf[64];
     int extrayears = 0;
+    char *resized;
 
     int len = strlen(str);
     if (len < CHECKSUM_OFFSET + 16) {
         printf("decode(): input too short(%d), padding..\n", len);
-        char buf[1024];
-        memset(buf, '0', sizeof(buf));
-        strcpy(buf, str);
-        buf[len] = '0';
-        buf[130] = '\0';
-        str = buf;
+
+        resized = calloc(1024, 1);
+        strcpy(resized, str);
+        resized[len] = '0';
+        resized[130] = '\0';
+        str = resized;
     }
 
     int blank = readn(str + BLANK_OFFSET, 1);
@@ -348,7 +362,7 @@ int decode(char *str){
         extrayears = time.tm_mday / 1461;
         extrayears *= 4;
         time.tm_mday %= 1461;
-    } 
+    }
 
     mktime(&time);
     time.tm_year += extrayears;
@@ -383,22 +397,22 @@ int decode(char *str){
     } else {
         printf(" ");
     }
-    
-struct ticket {
-    int daypass : 1;
-    int concession: 1;
-};
 
-const char *type_str[] = {
-    "UNKNOWN ",
-    "1 ZONE  ",
-    "2 ZONE  ",
-    "3 ZONE  ",
-    "CONC 1Z ",
-    "CONC 2Z ",
-    "C3Z/ADDF",
-    "DAYPASS "
-};
+    struct ticket {
+        int daypass : 1;
+        int concession: 1;
+    };
+
+    const char *type_str[] = {
+        "CONC DAY",
+        "1 ZONE  ",
+        "2 ZONE  ",
+        "3 ZONE  ",
+        "CONC 1Z ",
+        "CONC 2Z ",
+        "C3Z/ADDF",
+        "DAYPASS "
+    };
 
     const char *flags_str;
     if (exptime == flags) {
