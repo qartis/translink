@@ -317,7 +317,7 @@ int decode(char *str){
     if (len < CHECKSUM_OFFSET + 16) {
         printf("decode(): input too short(%d), padding..\n", len);
 
-        resized = calloc(1024, 1);
+        resized = (char *)calloc(1024, 1);
         strcpy(resized, str);
         resized[len] = '0';
         resized[130] = '\0';
