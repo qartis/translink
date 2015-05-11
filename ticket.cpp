@@ -7,8 +7,6 @@
 #include <string.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
-#include <FL/Fl_Shared_Image.H>
-#include <FL/Fl_PNG_Image.H>
 #include <FL/fl_draw.H>
 #include <unistd.h>
 #include <fcntl.h>
@@ -16,6 +14,8 @@
 #include <stdlib.h>
 
 #include "translink.h"
+#include "ticket-small.xpm"
+#include "font.xpm"
 
 #define MAX 1024
 
@@ -111,14 +111,14 @@ ssize_t safe_write(int fd, const uint8_t *buf, size_t count)
         }
     }
 
-    printf("wrote %d bytes (%d)\n", count, rc);
+    printf("wrote %zd bytes (%zd)\n", count, rc);
 
     return wroteb;
 }
 
 class MyWindow : public Fl_Double_Window {
-    Fl_PNG_Image *bg;
-    Fl_PNG_Image *font;
+    Fl_Pixmap *bg;
+    Fl_Pixmap *font;
     int x_offset;
     struct tm *tm;
 
@@ -172,8 +172,8 @@ public:
     }
 
     MyWindow(int W, int H) : Fl_Double_Window(W,H) {
-        bg  = new Fl_PNG_Image("ticket-small.png");
-        font = new Fl_PNG_Image("font.png");
+        bg = new Fl_Pixmap(ticket_small_xpm);
+        font = new Fl_Pixmap(font_xpm);
         edit_state = DAY;
         time_t now = time(NULL);
         tm = localtime(&now);
@@ -358,7 +358,7 @@ void msr505_read(int state, void *userp)
 
     for(;;){
         rc = safe_read(fd, buf + len, sizeof(buf) - len);
-        printf("safe_read() = %d\n", rc);
+        printf("safe_read() = %zd\n", rc);
         len += rc;
 
         while (buf[0] != 0x1b && len > 0) {
@@ -472,8 +472,6 @@ int main(int argc, char **argv)
         device = argv[1];
     }
 
-    fl_register_images();
-    Fl::visual(FL_RGB);
     MyWindow win(500,312);
 
     signal(SIGALRM, reset_buf);
